@@ -15,6 +15,7 @@
 
 void EnableInterrupts(void);
 void WaitForInterrupts(void);
+void Systick_Init (uint32_t ticks);
 
 
 
@@ -56,11 +57,22 @@ void WaitForInterrupt(void) {
 
 void Systick_Init (uint32_t ticks)
 {
-	NVIC_STCTRL_R = 0; // No interrupt
+	NVIC_STCTRL_R = 0; // No interrupt first
 	NVIC_STRELOAD_R = ticks - 1; 
 	NVIC_STCURRENT_R = 0;
 	NVIC_PRI0_R = (NVIC_PRI0_R & 0xFFFFFF1F) | 0xA0; //priority 5 ( bit 7-5 is 101 which is 5 in decimal, but based on hex postition its 10 so 0xA0)
 	
+	NVIC_STCTRL_R = 0x07; //On bit 0-2 so 0x07
 	
+}
+
+void Systick_Handler (void)
+{
+	GPIO_PORTA_DATA_R |= 0x10; //turn on PA4
+	
+}
+
+int main(void)
+{
 	
 }
