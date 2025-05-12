@@ -14,8 +14,10 @@
 //**DECLARATION**//
 
 void EnableInterrupts(void);
-void WaitForInterrupts(void);
+void WaitForInterrupt(void);
 void Systick_Init (uint32_t ticks);
+void SysTick_Handler (void);
+
 
 
 
@@ -35,8 +37,8 @@ void Systick_Init (uint32_t ticks);
 //ALL ABOUT NVIC (ctrl, reload, pri, current )
 #define NVIC_PRI0_R  						(*((volatile uint32_t *)0xE000E400)) //PRI0 because interrupt 0 ( Port A ) ( OFFSET 0X400)
 #define NVIC_STCTRL_R						(*((volatile uint32_t *)0xE000E010)) //Offset 0x010
-#define NVIC_STRELOAD_R						(*((volatile uint32_t *)0xE000E014)) //Offset 0x014
-#define NVIC_STCURRENT_R						(*((volatile uint32_t *)0xE000E018)) //Offset 0x018
+#define NVIC_STRELOAD_R					(*((volatile uint32_t *)0xE000E014)) //Offset 0x014
+#define NVIC_STCURRENT_R					(*((volatile uint32_t *)0xE000E018)) //Offset 0x018
 
 
 
@@ -50,11 +52,11 @@ void EnableInterrupts(void) {
 }
 
 // Wait for interrupt 
-void WaitForInterrupt(void) {
+void WaitForInterrupts(void) {
     __asm("WFI");  // WFI = Wait For Interrupt instruction
 }
 
-
+// 16 MHz standard clock speed (16.000.0000 ticks / second )
 void Systick_Init (uint32_t ticks)
 {
 	NVIC_STCTRL_R = 0; // No interrupt first
@@ -66,13 +68,24 @@ void Systick_Init (uint32_t ticks)
 	
 }
 
-void Systick_Handler (void)
+void SysTick_Handler (void)
 {
-	GPIO_PORTA_DATA_R |= 0x10; //turn on PA4
 	
+	GPIO_PORTA_DATA_R ^= 0x10; //turn on PA4 (toggling)(XOR)
+
 }
 
 int main(void)
 {
+	SYSCTL_RCGCGPIO_R |= 0x01; // Activate Clock for Port A
+	GPIO_PORTA_DIR_R |= 0x10;  // Set PA4 (output)
+	GPIO_PORTA_DEN_R |= 0x10; // 0001 0000 PA4 enable digital function
+	Systick_Init(800000); // 50 ms
+	EnableInterrupts();
 	
+	while(1)
+	{
+		WaitForInterrupts();
+	
+	}
 }
